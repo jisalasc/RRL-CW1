@@ -19,26 +19,33 @@ def run_q_learning(env,train_timesteps_M):
 
     # Learning rate and exploration rate schedules flags
     alpha_schedule = False
-    epsilon_schedule = False
+    epsilon_schedule = True
 
     for timestep in range(int(train_timesteps_M * 1e6)):
         
         if epsilon_schedule:
-            ### FILL IN HERE ###
-            raise NotImplementedError("Epsilon schedule not implemented")
+            # Linear decay of epsilon from initial value to 0.01 over training
+            min_epsilon = 0.01
+            current_epsilon = max(min_epsilon, EPSILON * (1 - timestep / (train_timesteps_M * 1e6)))
         else:
             current_epsilon = EPSILON
 
         if alpha_schedule:
-            ### FILL IN HERE ###
-            raise NotImplementedError("Alpha schedule not implemented")
+            # Exponential decay of learning rate (más suave)
+            decay_rate = 0.9999995
+            current_alpha = ALPHA * (decay_rate ** timestep)
         else:
             current_alpha = ALPHA
 
         indices = state_to_indices(state, [x_vals, x_dot_vals, theta_vals, theta_dot_vals])
         
-        ### FILL IN HERE ###
-        raise NotImplementedError("Action selection not implemented")
+        # Epsilon-greedy action selection
+        if np.random.random() < current_epsilon:
+            # Exploration: random action
+            action = np.random.randint(0, 2)
+        else:
+            # Exploitation: best action according to Q-table
+            action = np.argmax(Q[indices])
 
         next_state, _, terminated, truncated, _ = env.step(int(action))
         next_indices = state_to_indices(next_state, [x_vals, x_dot_vals, theta_vals, theta_dot_vals])
@@ -47,8 +54,9 @@ def run_q_learning(env,train_timesteps_M):
 
         # Q-value update
         best_next_q = np.max(Q[next_indices])
-        ### FILL IN HERE ###
-        raise NotImplementedError("Q-value update not implemented")
+        # Q-learning update: Q(s,a) = Q(s,a) + alpha * (reward + gamma * max(Q(s',a')) - Q(s,a))
+        target = reward + GAMMA * best_next_q
+        Q[indices + (action,)] += current_alpha * (target - Q[indices + (action,)])
 
         state = next_state
         if terminated or truncated:
